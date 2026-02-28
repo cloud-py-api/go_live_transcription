@@ -1,0 +1,7 @@
+go_live_transcription
+*.log
+*.csv
+.idea/
+.git/
+example.env
+persistent_storage/

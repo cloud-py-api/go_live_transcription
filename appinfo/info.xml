@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!--
+SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info>
+	<id>live_transcription</id>
+	<name>Live Transcription in Talk</name>
+	<summary>Provides live transcriptions in Nextcloud Talk calls.</summary>
+	<description>
+	<![CDATA[Provides live transcriptions in Nextcloud Talk calls. High-performance backend (HPB) is required for this app to work.
+
+IMPORTANT: Environment variables "LT_HPB_URL" and "LT_INTERNAL_SECRET" are required to be set in "Deploy Options" near the "Deploy and Enable" button before the install.
+]]>
+	</description>
+	<version>0.0.1</version>
+	<licence>agpl</licence>
+	<author mail="kyteinsky@gmail.com" homepage="https://github.com/kyteinsky">Anupam Kumar</author>
+	<author mail="mklehr@gmx.net" homepage="https://github.com/marcelklehr">Marcel Klehr</author>
+	<author mail="bigcat88@icloud.com" homepage="https://github.com/bigcat88/">Alexander Piskun</author>
+	<namespace>LiveTranscription</namespace>
+	<category>ai</category>
+	<category>social</category>
+	<website>https://github.com/cloud-py-api/live_transcription</website>
+	<bugs>https://github.com/cloud-py-api/live_transcription/issues</bugs>
+	<repository type="git">https://github.com/cloud-py-api/live_transcription</repository>
+	<dependencies>
+		<nextcloud min-version="33" max-version="34"/>
+	</dependencies>
+	<external-app>
+		<docker-install>
+			<registry>ghcr.io</registry>
+			<image>cloud-py-api/live_transcription</image>
+			<image-tag>0.0.1</image-tag>
+		</docker-install>
+		<environment-variables>
+			<variable>
+				<name>LT_HPB_URL</name>
+				<display-name>High-performance backend URL</display-name>
+				<description>URL of the high-performance backend, same as the URL in the admin settings of Talk. It ends in "/spreed" usually and looks something like "wss://cloud.example.com/standalone-signaling/spreed".</description>
+			</variable>
+			<variable>
+				<name>LT_INTERNAL_SECRET</name>
+				<display-name>Internal secret of the high-performance backend</display-name>
+				<description>Internal secret used to authenticate with the high-performance backend. This is not the same as the shared secret in the admin settings of Talk.</description>
+			</variable>
+			<variable>
+				<name>SKIP_CERT_VERIFY</name>
+				<display-name>Skip SSL certificate verification (optional)</display-name>
+				<description>When set to "true" or "1", certificate verifications will be skipped for the websocket connections to the HPB.</description>
+			</variable>
+		</environment-variables>
+		<scopes>
+			<value>TALK</value>
+			<value>TALK_BOT</value>
+		</scopes>
+		<protocol>http</protocol>
+		<system>false</system>
+		<routes>
+			<route>
+				<url>.*</url>
+				<verb>GET,POST,PUT,DELETE</verb>
+				<access_level>USER</access_level>
+				<headers_to_exclude>[]</headers_to_exclude>
+			</route>
+		</routes>
+	</external-app>
+</info>

@@ -1,0 +1,4 @@
+go_live_transcription
+*.log
+*.csv
+.idea/

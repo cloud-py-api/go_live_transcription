@@ -125,13 +125,13 @@ func (app *Application) TranscriptReq(ctx context.Context, roomToken, ncSessionI
 		app.leaveCallCb,
 	)
 
-	sender := transcript.NewSender(client, client.TranscriptCh)
 	transcriberMgr := vosk.NewTranscriberManager(langID, 16000, client.TranscriptCh)
 	audioWorker := vosk.NewAudioWorker(client, transcriberMgr)
 
 	translateIn := make(chan transcript.TranslateInputOutput, 100)
 	translateOut := make(chan transcript.TranslateInputOutput, 100)
 	meta := translation.NewMetaTranslator(app.client, roomToken, langID, translateIn, translateOut)
+	sender := transcript.NewSender(client, client.TranscriptCh, translateIn, meta)
 	transSender := translation.NewTranslatedSender(client, translateOut)
 
 	roomCtx, roomCancel := context.WithCancel(context.Background())
@@ -254,8 +254,8 @@ func (app *Application) SetTargetLanguage(roomToken, ncSessionID string, langID 
 	app.mu.Unlock()
 
 	if !ok {
-		slog.Info("set target language (no active room)", "room_token", roomToken)
-		return nil
+		slog.Warn("set target language (no active room)", "room_token", roomToken)
+		return fmt.Errorf("no active transcription session for room %s", roomToken)
 	}
 
 	if langID == nil || *langID == "" {

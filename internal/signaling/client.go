@@ -902,24 +902,46 @@ func (sc *SpreedClient) sendCandidate(sender, offerSid, candidateStr string) {
 	})
 }
 
-func (sc *SpreedClient) SendTranscript(t Transcript) {
+// SendTranscript sends a transcript to all targets. If excludeNcSid is
+// non-nil, targets whose Nextcloud session ID satisfies it are skipped
+// (used to suppress original-language finals for translation recipients).
+func (sc *SpreedClient) SendTranscript(t Transcript, excludeNcSid func(string) bool) {
 	sc.targetMu.Lock()
-	sids := make([]string, 0, len(sc.targets))
+	type target struct {
+		hpbSid string
+		ncSid  string
+	}
+	targets := make([]target, 0, len(sc.targets))
+	// Build reverse map only when we need to exclude
+	var hpbToNc map[string]string
+	if excludeNcSid != nil {
+		hpbToNc = make(map[string]string, len(sc.ncSidMap))
+		for nc, hpb := range sc.ncSidMap {
+			hpbToNc[hpb] = nc
+		}
+	}
 	for sid := range sc.targets {
-		sids = append(sids, sid)
+		nc := ""
+		if hpbToNc != nil {
+			nc = hpbToNc[sid]
+		}
+		targets = append(targets, target{hpbSid: sid, ncSid: nc})
 	}
 	sc.targetMu.Unlock()
 
-	if len(sids) == 0 {
+	if len(targets) == 0 {
 		return
 	}
 
 	finalVal := t.Final
-	for _, sid := range sids {
+	for _, tgt := range targets {
+		if excludeNcSid != nil && tgt.ncSid != "" && excludeNcSid(tgt.ncSid) {
+			continue
+		}
 		sc.SendMessage(SignalingMessage{
 			Type: "message",
 			Message: &DataMessage{
-				Recipient: &Recipient{Type: "session", SessionID: sid},
+				Recipient: &Recipient{Type: "session", SessionID: tgt.hpbSid},
 				Data: &MessagePayload{
 					Final:            &finalVal,
 					LangID:           t.LangID,
@@ -930,6 +952,14 @@ func (sc *SpreedClient) SendTranscript(t Transcript) {
 			},
 		})
 	}
+}
+
+// ResolveNcSessionID maps a Nextcloud session ID to the corresponding HPB session ID.
+// Returns empty string if not found.
+func (sc *SpreedClient) ResolveNcSessionID(ncSessionID string) string {
+	sc.targetMu.Lock()
+	defer sc.targetMu.Unlock()
+	return sc.ncSidMap[ncSessionID]
 }
 
 func hmacSHA256(key, message string) string {

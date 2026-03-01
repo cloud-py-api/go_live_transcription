@@ -79,11 +79,17 @@ func (s *TranslatedSender) Run(ctx context.Context) {
 
 func (s *TranslatedSender) sendTranslatedText(seg transcript.TranslateInputOutput) {
 	for ncSid := range seg.TargetNcSessionIDs {
+		hpbSid := s.client.ResolveNcSessionID(ncSid)
+		if hpbSid == "" {
+			s.logger.Debug("skipping translated text: HPB session ID not found",
+				"nc_session_id", ncSid)
+			continue
+		}
 		finalVal := true
 		s.client.SendMessage(signaling.SignalingMessage{
 			Type: "message",
 			Message: &signaling.DataMessage{
-				Recipient: &signaling.Recipient{Type: "session", SessionID: ncSid},
+				Recipient: &signaling.Recipient{Type: "session", SessionID: hpbSid},
 				Data: &signaling.MessagePayload{
 					LangID:           seg.TargetLanguage,
 					Message:          seg.Message,

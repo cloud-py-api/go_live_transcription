@@ -117,7 +117,7 @@ func (t *OCPTranslator) HasSessions() bool {
 func (t *OCPTranslator) Translate(message string) (string, error) {
 	schedBody := map[string]any{
 		"type":     translateTaskType,
-		"appId":    "go_live_transcription",
+		"appId":    "live_transcription",
 		"customId": fmt.Sprintf("lt-%s-%s-%s", t.roomToken, t.originLanguage, t.targetLanguage),
 		"input": map[string]any{
 			"input":           message,

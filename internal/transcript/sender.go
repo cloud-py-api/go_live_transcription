@@ -12,17 +12,31 @@ import (
 	"github.com/nextcloud/go_live_transcription/internal/signaling"
 )
 
-type Sender struct {
-	client *signaling.SpreedClient
-	ch     chan signaling.Transcript
-	logger *slog.Logger
+type TranslationForwarder interface {
+	ShouldTranslate() bool
+	IsTranslationTarget(ncSessionID string) bool
 }
 
-func NewSender(client *signaling.SpreedClient, ch chan signaling.Transcript) *Sender {
+type Sender struct {
+	client      *signaling.SpreedClient
+	ch          chan signaling.Transcript
+	translateIn chan TranslateInputOutput
+	translator  TranslationForwarder
+	logger      *slog.Logger
+}
+
+func NewSender(
+	client *signaling.SpreedClient,
+	ch chan signaling.Transcript,
+	translateIn chan TranslateInputOutput,
+	translator TranslationForwarder,
+) *Sender {
 	return &Sender{
-		client: client,
-		ch:     ch,
-		logger: slog.With("component", "transcript_sender"),
+		client:      client,
+		ch:          ch,
+		translateIn: translateIn,
+		translator:  translator,
+		logger:      slog.With("component", "transcript_sender"),
 	}
 }
 
@@ -43,9 +57,29 @@ func (s *Sender) Run(ctx context.Context) {
 				continue
 			}
 
+			// Forward final transcripts to the translation pipeline
+			if t.Final && s.translator.ShouldTranslate() {
+				select {
+				case s.translateIn <- TranslateInputOutput{
+					OriginLanguage:   t.LangID,
+					Message:          t.Message,
+					SpeakerSessionID: t.SpeakerSessionID,
+				}:
+				default:
+					s.logger.Warn("translate input channel full, dropping")
+				}
+			}
+
+			// For final transcripts, skip translation targets — they
+			// will receive the translated version instead.
+			var exclude func(string) bool
+			if t.Final && s.translator.ShouldTranslate() {
+				exclude = s.translator.IsTranslationTarget
+			}
+
 			done := make(chan struct{})
 			go func() {
-				s.client.SendTranscript(t)
+				s.client.SendTranscript(t, exclude)
 				close(done)
 			}()
 

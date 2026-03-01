@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	vosk "github.com/alphacep/vosk-api/go"
+
 	"github.com/nextcloud/go_live_transcription/internal/signaling"
 )
 
@@ -69,13 +70,14 @@ func (r *Recognizer) FeedAudio(pcmData []byte) {
 	r.feedCount++
 	r.chunksSinceFinal++
 
-	if r.rec.AcceptWaveform(pcmData) != 0 {
+	switch {
+	case r.rec.AcceptWaveform(pcmData) != 0:
 		// Natural final result
 		resultJSON := r.rec.Result()
 		r.logger.Debug("vosk final result", "json", resultJSON)
 		r.emitTranscript(resultJSON, true)
 		r.chunksSinceFinal = 0
-	} else if r.chunksSinceFinal >= maxChunksBeforeForceFinalize {
+	case r.chunksSinceFinal >= maxChunksBeforeForceFinalize:
 		// Force finalization to prevent unbounded C-side memory growth
 		resultJSON := r.rec.FinalResult()
 		r.logger.Debug("vosk forced final", "json", resultJSON, "chunks", r.chunksSinceFinal)
@@ -83,7 +85,7 @@ func (r *Recognizer) FeedAudio(pcmData []byte) {
 		r.chunksSinceFinal = 0
 		// Recreate the recognizer to fully release C memory
 		r.resetRecognizer()
-	} else {
+	default:
 		// Partial result
 		partialJSON := r.rec.PartialResult()
 		r.emitTranscript(partialJSON, false)
@@ -92,7 +94,7 @@ func (r *Recognizer) FeedAudio(pcmData []byte) {
 
 func (r *Recognizer) emitTranscript(resultJSON string, isFinal bool) {
 	var result voskResult
-	if err := json.Unmarshal([]byte(resultJSON), &result); err != nil {
+	if err := json.Unmarshal([]byte(resultJSON), &result); err != nil { //nolint:gocritic // err is checked
 		return
 	}
 

@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	vosk "github.com/alphacep/vosk-api/go"
+
 	"github.com/nextcloud/go_live_transcription/internal/appapi"
 	"github.com/nextcloud/go_live_transcription/internal/languages"
 )

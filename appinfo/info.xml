@@ -50,12 +50,7 @@ IMPORTANT: Environment variables "LT_HPB_URL" and "LT_INTERNAL_SECRET" are requi
 				<description>When set to "true" or "1", certificate verifications will be skipped for the websocket connections to the HPB.</description>
 			</variable>
 		</environment-variables>
-		<scopes>
-			<value>TALK</value>
-			<value>TALK_BOT</value>
-		</scopes>
 		<protocol>http</protocol>
-		<system>false</system>
 		<routes>
 			<route>
 				<url>.*</url>

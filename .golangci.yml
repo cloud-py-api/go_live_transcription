@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2026 Nextcloud GmbH and Nextcloud contributors
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+version: "2"
+
+run:
+  timeout: 5m
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/nextcloud/go_live_transcription
+
+linters:
+  enable:
+    # Bug detection
+    - govet
+    - staticcheck
+    - errcheck
+    - ineffassign
+    - bodyclose
+    - noctx
+
+    # Code simplification
+    - unused
+    - gocritic
+    - revive
+    - misspell
+
+    # Logging
+    - sloglint
+
+    # Security
+    - gosec
+
+  settings:
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam  # CGO structs may be large by necessity
+
+    revive:
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: exported
+          disabled: true  # internal app, not a public library
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: unexported-return
+        - name: unreachable-code
+        - name: var-declaration
+        - name: var-naming
+
+    gosec:
+      excludes:
+        - G107  # variable URLs are expected (API calls, model downloads)
+        - G301  # 0755 dir permissions are fine for model storage
+        - G304  # file paths from controlled internal logic
+        - G402  # TLS InsecureSkipVerify — needed for dev/self-signed certs
+        - G115  # integer overflow conversion — too noisy for audio sample math
+
+    misspell:
+      locale: US
+
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (net/http.ResponseWriter).Write
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

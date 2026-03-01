@@ -4,6 +4,7 @@
 package vosk
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -31,7 +32,7 @@ type hfEntry struct {
 func DownloadModels(client *appapi.Client, storageDir string) error {
 	slog.Info("starting model download", "repo", hfRepo, "dest", storageDir)
 
-	if err := os.MkdirAll(storageDir, 0755); err != nil {
+	if err := os.MkdirAll(storageDir, 0o755); err != nil {
 		return fmt.Errorf("create storage dir: %w", err)
 	}
 
@@ -83,7 +84,11 @@ func listAllFiles(prefix string) ([]hfEntry, error) {
 		url += "/" + prefix
 	}
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("create request %s: %w", url, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("GET %s: %w", url, err)
 	}
@@ -100,9 +105,10 @@ func listAllFiles(prefix string) ([]hfEntry, error) {
 
 	var files []hfEntry
 	for _, e := range entries {
-		if e.Type == "file" {
+		switch e.Type {
+		case "file":
 			files = append(files, e)
-		} else if e.Type == "directory" {
+		case "directory":
 			subFiles, err := listAllFiles(e.Path)
 			if err != nil {
 				return nil, err
@@ -118,11 +124,15 @@ func downloadFile(storageDir, filePath string) error {
 	url := fmt.Sprintf("%s/%s/resolve/%s/%s", hfResolve, hfRepo, hfRevision, filePath)
 	localPath := filepath.Join(storageDir, filePath)
 
-	if err := os.MkdirAll(filepath.Dir(localPath), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(localPath), 0o755); err != nil {
 		return fmt.Errorf("mkdir: %w", err)
 	}
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, http.NoBody)
+	if err != nil {
+		return fmt.Errorf("create request %s: %w", url, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("GET %s: %w", url, err)
 	}
@@ -139,14 +149,14 @@ func downloadFile(storageDir, filePath string) error {
 	}
 
 	if _, err := io.Copy(f, resp.Body); err != nil {
-		f.Close()
-		os.Remove(tmpPath)
+		_ = f.Close()
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("write file: %w", err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	if err := os.Rename(tmpPath, localPath); err != nil {
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return fmt.Errorf("rename: %w", err)
 	}
 

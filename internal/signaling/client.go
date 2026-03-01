@@ -25,10 +25,11 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/hraban/opus"
-	"github.com/nextcloud/go_live_transcription/internal/appapi"
-	"github.com/nextcloud/go_live_transcription/internal/constants"
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
+
+	"github.com/nextcloud/go_live_transcription/internal/appapi"
+	"github.com/nextcloud/go_live_transcription/internal/constants"
 )
 
 var (
@@ -277,13 +278,13 @@ func (sc *SpreedClient) closeInternal() {
 
 	sc.peerConnsMu.Lock()
 	for sid, pc := range sc.peerConns {
-		pc.Close()
+		_ = pc.Close()
 		delete(sc.peerConns, sid)
 	}
 	sc.peerConnsMu.Unlock()
 
 	if sc.conn != nil {
-		sc.conn.Close()
+		_ = sc.conn.Close()
 		sc.conn = nil
 	}
 
@@ -382,7 +383,7 @@ func (sc *SpreedClient) monitor(ctx context.Context) {
 		msg, err := sc.receiveMessage(0)
 		if err != nil {
 			if ctx.Err() != nil {
-				return // context cancelled
+				return // context canceled
 			}
 			sc.logger.Error("websocket error in monitor, closing", "error", err)
 			sc.Close()
@@ -441,7 +442,7 @@ func (sc *SpreedClient) handleEvent(msg *SignalingMessage) {
 
 			sc.peerConnsMu.Lock()
 			if pc, ok := sc.peerConns[user.SessionID]; ok {
-				pc.Close()
+				_ = pc.Close()
 				delete(sc.peerConns, user.SessionID)
 			}
 			sc.peerConnsMu.Unlock()
@@ -530,7 +531,7 @@ func (sc *SpreedClient) handleOffer(ctx context.Context, msg *SignalingMessage) 
 
 	sc.peerConnsMu.Lock()
 	if oldPC, ok := sc.peerConns[spkrSid]; ok {
-		oldPC.Close()
+		_ = oldPC.Close()
 		delete(sc.peerConns, spkrSid)
 	}
 	sc.peerConnsMu.Unlock()
@@ -558,7 +559,7 @@ func (sc *SpreedClient) handleOffer(ctx context.Context, msg *SignalingMessage) 
 		webrtc.RTPTransceiverInit{Direction: webrtc.RTPTransceiverDirectionRecvonly})
 	if err != nil {
 		sc.logger.Error("failed to add audio transceiver", "error", err)
-		pc.Close()
+		_ = pc.Close()
 		return
 	}
 
@@ -595,19 +596,19 @@ func (sc *SpreedClient) handleOffer(ctx context.Context, msg *SignalingMessage) 
 	})
 	if err != nil {
 		sc.logger.Error("failed to set remote description", "error", err)
-		pc.Close()
+		_ = pc.Close()
 		return
 	}
 
 	answer, err := pc.CreateAnswer(nil)
 	if err != nil {
 		sc.logger.Error("failed to create answer", "error", err)
-		pc.Close()
+		_ = pc.Close()
 		return
 	}
 	if err := pc.SetLocalDescription(answer); err != nil {
 		sc.logger.Error("failed to set local description", "error", err)
-		pc.Close()
+		_ = pc.Close()
 		return
 	}
 
@@ -751,8 +752,8 @@ func (sc *SpreedClient) receiveMessage(timeout time.Duration) (*SignalingMessage
 	}
 
 	if timeout > 0 {
-		sc.conn.SetReadDeadline(time.Now().Add(timeout))
-		defer sc.conn.SetReadDeadline(time.Time{})
+		_ = sc.conn.SetReadDeadline(time.Now().Add(timeout))
+		defer func() { _ = sc.conn.SetReadDeadline(time.Time{}) }()
 	}
 
 	_, data, err := sc.conn.ReadMessage()

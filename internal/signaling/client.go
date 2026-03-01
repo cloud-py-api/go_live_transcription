@@ -659,7 +659,7 @@ func (sc *SpreedClient) readAudioTrack(ctx context.Context, sessionID string, tr
 	)
 	defer sc.logger.Info("audio track reader stopped", "session_id", sessionID)
 
-	const sampleRate = 48000
+	const sampleRate = 16000
 	const channels = 1
 	dec, err := opus.NewDecoder(sampleRate, channels)
 	if err != nil {
@@ -667,7 +667,7 @@ func (sc *SpreedClient) readAudioTrack(ctx context.Context, sessionID string, tr
 		return
 	}
 
-	pcmBuf := make([]int16, 5760) // max 120ms at 48kHz
+	pcmBuf := make([]int16, 1920) // max 120ms at 16kHz
 
 	rtpBuf := make([]byte, 4096)
 

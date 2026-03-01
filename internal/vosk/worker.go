@@ -50,8 +50,7 @@ func (w *AudioWorker) Run(ctx context.Context) {
 				continue
 			}
 
-			downsampled := downsample48to16(audio.Samples)
-			pcmBytes := int16ToBytes(downsampled)
+			pcmBytes := int16ToBytes(audio.Samples)
 			rec.FeedAudio(pcmBytes)
 		}
 	}
@@ -67,15 +66,4 @@ func int16ToBytes(samples []int16) []byte {
 
 func (w *AudioWorker) SetLanguage(language string) error {
 	return w.manager.SetLanguage(language)
-}
-
-func downsample48to16(samples []int16) []int16 {
-	const ratio = 3 // 48000 / 16000
-	outLen := len(samples) / ratio
-	out := make([]int16, outLen)
-	for i := 0; i < outLen; i++ {
-		sum := int32(samples[i*ratio]) + int32(samples[i*ratio+1]) + int32(samples[i*ratio+2])
-		out[i] = int16(sum / ratio)
-	}
-	return out
 }

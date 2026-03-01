@@ -13,7 +13,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 IMPORTANT: Environment variables "LT_HPB_URL" and "LT_INTERNAL_SECRET" are required to be set in "Deploy Options" near the "Deploy and Enable" button before the install.
 ]]>
 	</description>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<licence>agpl</licence>
 	<author mail="kyteinsky@gmail.com" homepage="https://github.com/kyteinsky">Anupam Kumar</author>
 	<author mail="mklehr@gmx.net" homepage="https://github.com/marcelklehr">Marcel Klehr</author>
@@ -50,12 +50,7 @@ IMPORTANT: Environment variables "LT_HPB_URL" and "LT_INTERNAL_SECRET" are requi
 				<description>When set to "true" or "1", certificate verifications will be skipped for the websocket connections to the HPB.</description>
 			</variable>
 		</environment-variables>
-		<scopes>
-			<value>TALK</value>
-			<value>TALK_BOT</value>
-		</scopes>
 		<protocol>http</protocol>
-		<system>false</system>
 		<routes>
 			<route>
 				<url>.*</url>

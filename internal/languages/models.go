@@ -407,7 +407,7 @@ var LanguageMap = map[string]LanguageModel{
 	"ta":       newLang("Tamil"),
 	"tab":      newLang("Tabassaran"),
 	"te":       newLang("\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41"),
-	"tem":      newLang("Timne"),
+	"tem":      newLang("Timne"), //nolint:misspell // Timne is the correct name of the language
 	"teo":      newLang("Teso"),
 	"tet":      newLang("Tetum"),
 	"tg":       newLang("\u0442\u043e\u04b7\u0438\u043a\u04e3"),

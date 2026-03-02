@@ -17,6 +17,8 @@ help:
 	@echo " "
 	@echo "  build             builds the Go binary (CGO enabled for Vosk + Opus)"
 	@echo "  run               builds and runs the ExApp locally"
+	@echo "  lint              runs golangci-lint"
+	@echo "  fmt               formats code with goimports"
 	@echo " "
 	@echo "  > Docker commands:"
 	@echo " "
@@ -31,6 +33,14 @@ help:
 	@echo "  unregister        unregisters the ExApp from master"
 	@echo "  register33        registers the ExApp on stable33"
 	@echo "  register32        registers the ExApp on stable32"
+
+.PHONY: lint
+lint:
+	golangci-lint run ./...
+
+.PHONY: fmt
+fmt:
+	goimports -w -local github.com/nextcloud/go_live_transcription .
 
 .PHONY: build
 build:

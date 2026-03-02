@@ -59,13 +59,10 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
-
 	var ln net.Listener
 	if os.Getenv("HP_SHARED_KEY") != "" {
 		sockPath := "/tmp/exapp.sock"
-		os.Remove(sockPath) // clean up stale socket
+		_ = os.Remove(sockPath) // clean up stale socket
 		ln, err = net.Listen("unix", sockPath)
 		if err != nil {
 			slog.Error("failed to listen on unix socket", "path", sockPath, "error", err)
@@ -82,10 +79,13 @@ func main() {
 		slog.Info("HTTP server listening on TCP", "addr", addr)
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	go func() {
 		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
 			slog.Error("HTTP server error", "error", err)
-			os.Exit(1)
+			stop()
 		}
 	}()
 

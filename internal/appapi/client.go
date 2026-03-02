@@ -5,6 +5,7 @@ package appapi
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -37,9 +38,9 @@ func NewClient(cfg *Config) *Client {
 	}
 }
 
-func (c *Client) OCSGet(path string, userID string) (json.RawMessage, error) {
+func (c *Client) OCSGet(path, userID string) (json.RawMessage, error) {
 	url := c.cfg.NextcloudURL + path
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -82,14 +83,14 @@ func (c *Client) setHeaders(req *http.Request, userID string) {
 	req.Header.Set("Accept", "application/json")
 }
 
-func (c *Client) OCSPost(path string, userID string, body any) (json.RawMessage, error) {
+func (c *Client) OCSPost(path, userID string, body any) (json.RawMessage, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling body: %w", err)
 	}
 
 	url := c.cfg.NextcloudURL + path
-	req, err := http.NewRequest("POST", url, bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(context.Background(), "POST", url, bytes.NewReader(jsonBody))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
@@ -126,14 +127,14 @@ func (c *Client) OCSPost(path string, userID string, body any) (json.RawMessage,
 	return ocsResp.OCS.Data, nil
 }
 
-func (c *Client) OCSPut(path string, userID string, body any) (json.RawMessage, error) {
+func (c *Client) OCSPut(path, userID string, body any) (json.RawMessage, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("marshaling body: %w", err)
 	}
 
 	url := c.cfg.NextcloudURL + path
-	req, err := http.NewRequest("PUT", url, bytes.NewReader(jsonBody))
+	req, err := http.NewRequestWithContext(context.Background(), "PUT", url, bytes.NewReader(jsonBody))
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}

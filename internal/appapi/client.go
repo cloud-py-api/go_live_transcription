@@ -174,8 +174,7 @@ func (c *Client) OCSPut(path, userID string, body any) (json.RawMessage, error) 
 // SetInitStatus reports init progress (0-100) back to AppAPI.
 // 100 means init complete and triggers auto-enable.
 func (c *Client) SetInitStatus(progress int) error {
-	path := fmt.Sprintf("/ocs/v1.php/apps/app_api/apps/status/%s", c.cfg.AppID)
-	_, err := c.OCSPut(path, "", map[string]any{
+	_, err := c.OCSPut("/ocs/v1.php/apps/app_api/ex-app/status", "", map[string]any{
 		"progress": progress,
 		"error":    "",
 	})
